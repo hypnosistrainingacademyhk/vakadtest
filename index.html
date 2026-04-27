@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感知偏好評估 - 香港催眠訓練學院</title>
+    <style>
+        :root { --primary-blue: #1d3557; --accent-gold: #c5a059; --light-blue: #f8fbff; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif; background: linear-gradient(180deg, #ffffff 0%, #e3f2fd 100%); background-attachment: fixed; color: #333; }
+        .brand-header { padding: 30px 20px 10px; text-align: center; background: white; }
+        .brand-name { font-size: 1.6em; color: var(--primary-blue); font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; }
+        .test-title { font-size: 1.1em; color: var(--accent-gold); font-weight: 500; border-top: 1px solid #eee; display: inline-block; padding-top: 5px; margin-top: 5px; }
+        .progress-fixed { position: sticky; top: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 12px 20px; z-index: 1000; border-bottom: 1px solid #eef2f6; display: flex; align-items: center; justify-content: space-between; }
+        .bar-outer { flex: 1; height: 6px; background: #eee; margin-left: 15px; border-radius: 10px; overflow: hidden; }
+        .bar-inner { height: 100%; background: var(--primary-blue); width: 0%; transition: 0.3s; }
+        .main-content { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .q-box { background: white; margin-bottom: 12px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
+        .q-num { color: #aaa; font-weight: bold; font-size: 0.8em; margin-bottom: 5px; display: block; }
+        .q-txt { font-size: 1.1em; font-weight: bold; color: #111; margin-bottom: 15px; line-height: 1.4; }
+        .opt-wrap { display: flex; flex-direction: column; gap: 8px; }
+        .opt-btn { padding: 14px 15px; background: #fafafa; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.2s; font-size: 0.95em; display: flex; align-items: center; }
+        .opt-btn.active { border-color: var(--primary-blue); background: var(--light-blue); color: var(--primary-blue); font-weight: bold; }
+        .opt-tag { margin-right: 12px; color: var(--accent-gold); font-weight: bold; }
+        .submit-section { padding: 30px 0; text-align: center; }
+        .go-btn { background: var(--primary-blue); color: white; padding: 18px 0; border: 3px solid var(--accent-gold); border-radius: 50px; font-size: 1.2em; font-weight: bold; width: 100%; max-width: 320px; cursor: pointer; }
+        .go-btn:disabled { background: #ccc; border-color: #bbb; opacity: 0.5; }
+        #finish-msg { display: none; padding: 40px 20px; text-align: center; }
+        .result-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: left; margin-top: 20px; }
+        .stat-row { margin: 15px 0; }
+        .stat-label { font-weight: bold; margin-bottom: 5px; display: block; }
+        .stat-bar-bg { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; background: var(--accent-gold); transition: 1s; width: 0%; }
+    </style>
+</head>
+<body>
+
+<header class="brand-header">
+    <div class="brand-name">香港催眠訓練學院</div>
+    <div class="test-title">感知偏好評估測驗</div>
+</header>
+
+<div class="progress-fixed">
+    <div style="font-weight: bold; font-size: 13px;">已完成 <span id="done-count">0</span>/30</div>
+    <div class="bar-outer"><div class="bar-inner" id="bar-fill"></div></div>
+</div>
+
+<div class="main-content">
+    <form id="spa-form">
+        <div id="questions-render"></div>
+        <div class="submit-section">
+            <button type="button" id="submit-action" class="go-btn" onclick="generateReport()" disabled>即時生成我的感知藍圖</button>
+        </div>
+    </form>
+    <div id="finish-msg">
+        <h2 style="color: var(--primary-blue); margin-bottom: 5px;">您的感知能量藍圖</h2>
+        <div class="result-card">
+            <div class="stat-row"><span class="stat-label">視覺型 (Visual) - <span id="v-val">0</span>%</span><div class="stat-bar-bg"><div class="stat-bar-fill" id="v-bar"></div></div></div>
+            <div class="stat-row"><span class="stat-label">聽覺型 (Auditory) - <span id="a-val">0</span>%</span><div class="stat-bar-bg"><div class="stat-bar-fill" id="a-bar"></div></div></div>
+            <div class="stat-row"><span class="stat-label">感覺型 (Kinesthetic) - <span id="k-val">0</span>%</span><div class="stat-bar-bg"><div class="stat-bar-fill" id="k-bar"></div></div></div>
+            <div class="stat-row"><span class="stat-label">內覺邏輯型 (Digital/OG) - <span id="o-val">0</span>%</span><div class="stat-bar-bg"><div class="stat-bar-fill" id="o-bar"></div></div></div>
+            <div id="analysis-text" style="margin-top: 25px; line-height: 1.6; color: #444; border-top: 1px solid #eee; padding-top: 20px;"></div>
+        </div>
+        <button onclick="location.reload()" style="margin-top: 30px; background: none; border: 1px solid #ccc; padding: 10px 20px; border-radius: 5px; cursor: pointer;">重新測試</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {q: "當您回憶一場精彩的演講，您印象最深的是：", a: ["講者的肢體動作與簡報", "講者抑揚頓挫的聲音與語調", "內容帶給您的感動與共鳴", "演講內容的邏輯性與實用價值"], c: ['A','B','C','D']},
+        {q: "學習一項新的運動技能時，您通常會：", a: ["觀察教練的示範動作", "聽取教練口頭講解要領", "親自試做幾次感受身體發力", "分析動作背後的力學原理"], c: ['A','B','C','D']},
+        {q: "買車或選購大型家電時，您最先留意：", a: ["產品的外型設計與顏色", "引擎聲或操作時的靜音程度", "座椅的舒適度或按鍵觸感", "產品的技術參數與性價比數據"], c: ['A','B','C','D']},
+        {q: "進入一間新開的咖啡館，最吸引您的是：", a: ["室內的裝潢風格與燈光設計", "背景音樂與磨豆機的聲音", "沙發的柔軟程度與空間氛圍", "菜單的種類與服務流程"], c: ['A','B','C','D']},
+        {q: "在繁忙的工作中，什麼最能讓您平靜下來？", a: ["看著窗外的遠景或綠色植物", "聽一段輕柔的純音樂", "換一個舒服的坐姿或伸個懶腰", "在心中整理接下來的待辦清單"], c: ['A','B','C','D']},
+        {q: "當您規劃假期旅行時，您的動力通常源於：", a: ["看到旅遊雜誌上的絕美風景照", "聽到朋友描述當地的風土人情", "渴望在那裡徹底放鬆身心的感覺", "對當地文化與行程安排的好奇心"], c: ['A','B','C','D']},
+        {q: "描述一個人時，您最容易記住：", a: ["對方的眼神與穿衣打扮", "對方的說話聲音或口音", "對方給您的安全感或親和力", "對方的專業背景或談話邏輯"], c: ['A','B','C','D']},
+        {q: "閱讀小說時，您最享受的是：", a: ["文字帶來的畫面美感", "文字敘述的節奏與韻律感", "故事帶動的情緒起伏", "作者傳遞的思想與邏輯深度"], c: ['A','B','C','D']},
+        {q: "在進行團隊溝通時，您傾向於：", a: ["使用圖表、文字來展示想法", "透過開會討論直接交流意見", "注重成員間的情感連結與默契", "關注流程是否有系統、有邏輯"], c: ['A','B','C','D']},
+        {q: "您如何記得一個重要的電話號碼？", a: ["在腦海中想像號碼寫下來的樣子", "重複唸出聲音讓耳朵記住", "手指在鍵盤上模擬按鍵的位置", "尋找數字間的邏輯規律"], c: ['A','B','C','D']},
+        {q: "在選擇酒店住宿時，您的優先考量是：", a: ["房間是否有漂亮的景觀", "隔音效果是否夠好、夠寧靜", "床具的質感與親膚感", "飯店的評分與設施數據說明"], c: ['A','B','C','D']},
+        {q: "在壓力下，您的第一反應通常是：", a: ["視覺變得敏感，容易被雜亂干擾", "對周圍的噪音感到異常煩躁", "感到胸口悶或肌肉緊繃", "開始不斷內省並與自己對話分析"], c: ['A','B','C','D']},
+        {q: "您更喜歡哪種慶祝成功的方式？", a: ["去看一場震撼的表演", "與知己傾談交流心情", "享受一次高級的身體SPA", "獨自思考下一步的長期規劃"], c: ['A','B','C','D']},
+        {q: "對您來說，最好的老師是：", a: ["能把枯燥知識畫成清晰圖解的人", "聲音有感染力、說法幽默的人", "能引導學生親身體驗、動手做的人", "能將複雜問題解釋得非常有條理的人"], c: ['A','B','C','D']},
+        {q: "買禮物送人時，您會：", a: ["選擇包裝最亮眼、美觀的", "選擇能讓人「聽」出心思的(如黑膠唱片)", "選擇質地溫潤、實用的手感小物", "選擇具有功能性或實用意義的產品"], c: ['A','B','C','D']},
+        {q: "回憶童年往事，您首先想到：", a: ["老家窗外的景色與舊照片", "家人說過的某些話或笑聲", "當時玩耍時的溫度與快樂感", "那時候學習到的生活真理"], c: ['A','B','C','D']},
+        {q: "什麼樣的廣告最容易吸引您購買？", a: ["畫面精美、色彩鮮明的視頻廣告", "背景音樂動聽、台詞磁性的電台廣告", "強調產品能帶來舒適體驗的廣告", "條列出功能與數據對比的平面廣告"], c: ['A','B','C','D']},
+        {q: "在看電影時，如果您覺得出戲，是因為：", a: ["特效與場景看起來很假", "配樂與對白不協調", "電影院座位坐得腰酸背痛", "劇情邏輯漏洞太多"], c: ['A','B','C','D']},
+        {q: "學習外語時，您覺得最有效率的方法是：", a: ["看教學影片或看書上的範例", "多聽音頻、多模仿發音", "直接在日常生活中應用、練習", "學習其語法系統與造句邏輯"], c: ['A','B','C','D']},
+        {q: "描述您的理想家園，您會說：", a: ["「寬敞明亮、裝修風格現代」", "「環境安靜、有動人的音響」", "「充滿溫暖感、沙發非常舒服」", "「功能齊全、動線規劃合理」"], c: ['A','B','C','D']},
+        {q: "在談話中，您最不喜歡：", a: ["對方不停做小動作干擾視線", "對方說話聲音太大或太尖銳", "對方語氣冰冷，缺乏情感溫度", "對方說話沒重點、邏輯混亂"], c: ['A','B','C','D']},
+        {q: "當您遇到困難，您習慣：", a: ["畫出心智圖來釐清現狀", "找人商量並聽取意見", "先讓自己靜下來「感覺」一下", "列出優缺點清單進行理性分析"], c: ['A','B','C','D']},
+        {q: "挑選合適的運動鞋，您會：", a: ["看款式是否帥氣、顯瘦", "聽腳落地時的聲音是否厚實", "感受足弓支撐與鞋底彈性", "比較各品牌的耐磨數據"], c: ['A','B','C','D']},
+        {q: "您如何理解「成功」？", a: ["看到自己擁有亮眼的成果", "聽到周圍人的讚美與肯定", "內心感到充實與平靜", "達成預設的理標規劃"], c: ['A','B','C','D']},
+        {q: "在商場購物時，您通常：", a: ["被櫥窗陳列吸引進去", "被熱情的推銷聲音吸引", "想親手觸摸產品的質感", "先上網對比評價與規格"], c: ['A','B','C','D']},
+        {q: "回憶一件冒險的事，您的記憶點是：", a: ["當時看到的壯闊或驚險景象", "當時心跳聲或風吹過的聲音", "當時全身緊繃或興奮的感覺", "那次經歷對人生的邏輯意義"], c: ['A','B','C','D']},
+        {q: "選擇一本書閱讀，是因為：", a: ["封面設計或書中的插圖", "書名唸起來很有詩意", "讀幾頁後感覺很順手、溫暖", "該書在專業領域的權威性"], c: ['A','B','C','D']},
+        {q: "您更喜歡哪種度假方式？", a: ["去絕美的拍照景點打卡", "去聽一場當地民謠音樂會", "去海邊躺著享受陽光沙灘", "去參觀具有歷史意義的博物館"], c: ['A','B','C','D']},
+        {q: "什麼樣的朋友最讓您珍惜？", a: ["懂您的審美、能一起拍照的朋友", "懂您的話題、能聊個不停的朋友", "能給您溫暖、在身邊陪伴的朋友", "能給您理智建議、指引方向的朋友"], c: ['A','B','C','D']},
+        {q: "當您進入深度思考，您的狀態是：", a: ["眼神專注在一點或看著遠方", "不自覺地輕聲自言自語", "手腳有些小動作（如轉筆）", "大腦飛速運轉分析各種因果"], c: ['A','B','C','D']}
+    ];
+
+    const display = document.getElementById('questions-render');
+    quizData.forEach((q, i) => {
+        display.innerHTML += `<div class="q-box" id="step${i}"><span class="q-num">NO. ${i+1}</span><div class="q-txt">${q.q}</div><div class="opt-wrap">${q.a.map((opt, idx) => `<div class="opt-btn" onclick="choose(${i}, '${q.c[idx]}', this)"><span class="opt-tag">${q.c[idx]}</span> ${opt}</div>`).join('')}</div></div>`;
+    });
+
+    let record = {};
+    function choose(idx, val, el) {
+        const group = el.parentElement.querySelectorAll('.opt-btn');
+        group.forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        record[idx] = val;
+        const totalDone = Object.keys(record).length;
+        document.getElementById('done-count').innerText = totalDone;
+        document.getElementById('bar-fill').style.width = (totalDone/30*100) + "%";
+        if(totalDone === 30) document.getElementById('submit-action').disabled = false;
+        const next = document.getElementById('step' + (idx + 1));
+        if(next) { const pos = next.getBoundingClientRect().top + window.pageYOffset - 80; window.scrollTo({ top: pos, behavior: 'smooth' }); }
+    }
+
+    function generateReport() {
+        document.getElementById('spa-form').style.display = 'none';
+        document.querySelector('.brand-header').style.display = 'none';
+        document.querySelector('.progress-fixed').style.display = 'none';
+        let scores = { A: 0, B: 0, C: 0, D: 0 };
+        Object.values(record).forEach(v => scores[v]++);
+        const vPer = Math.round((scores.A / 30) * 100);
+        const aPer = Math.round((scores.B / 30) * 100);
+        const kPer = Math.round((scores.C / 30) * 100);
+        const oPer = Math.round((scores.D / 30) * 100);
+        document.getElementById('v-val').innerText = vPer; document.getElementById('v-bar').style.width = vPer + "%";
+        document.getElementById('a-val').innerText = aPer; document.getElementById('a-bar').style.width = aPer + "%";
+        document.getElementById('k-val').innerText = kPer; document.getElementById('k-bar').style.width = kPer + "%";
+        document.getElementById('o-val').innerText = oPer; document.getElementById('o-bar').style.width = oPer + "%";
+        
+        let mainType = "";
+        let maxScore = Math.max(vPer, aPer, kPer, oPer);
+        if (maxScore === vPer) mainType = "<b>視覺型 (Visual)</b>：您習慣透過影像來思考。鮮豔的色彩與清晰的畫面感最能觸動您的潛意識。建議多利用想像力引導來強化學習效果。";
+        else if (maxScore === aPer) mainType = "<b>聽覺型 (Auditory)</b>：您對聲音、節奏與語氣極其敏銳。文字的節奏感對您非常有說服力，學習時聽課會比閱讀更有效果。";
+        else if (maxScore === kPer) mainType = "<b>感覺型 (Kinesthetic)</b>：您透過身體感受與情緒連結。您的學習需要「體驗」，動作與情緒的連結是您打開潛意識的關鍵。";
+        else mainType = "<b>內覺邏輯型 (Digital)</b>：您注重邏輯、數據與內在對話。您傾向於系統化的思考，需要先「理解」原理才能產生動力。";
+        
+        document.getElementById('analysis-text').innerHTML = "<b>核心解析：</b><br>" + mainType;
+        document.getElementById('finish-msg').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
